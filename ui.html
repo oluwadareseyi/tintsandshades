@@ -1,0 +1,140 @@
+<head>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
+
+    * {
+      box-sizing: border-box;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    p {
+      margin: 0;
+    }
+
+    body {
+      background: #f8f9fc;
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", sans-serif;
+    }
+
+    .image-wrapper {
+      background-color: #ffffff;
+      padding-top: 20px;
+    }
+
+    .c-main__image {
+      max-width: 500px;
+      width: 100%;
+      height: 220px;
+      overflow: hidden;
+      background-image: url("https://res.cloudinary.com/dmwfd0zhh/image/upload/q_auto:best/v1614207264/colorsng/man-working-from-home_1_dpvvvu.png");
+      background-size: cover;
+      background-position: 0 20%;
+      background-repeat: no-repeat;
+    }
+
+    .c-panels {
+      border-radius: 0px 0px 8px 8px;
+      padding: 30px 20px;
+    }
+
+    .c-panels .instruction {
+      max-width: 250px;
+      color: #373a40;
+      font-size: 14px;
+      margin: 0 auto;
+    }
+
+    .c-panels {
+      text-align: center;
+    }
+
+    #create {
+      background: #0d9989;
+      border-radius: 4px;
+      width: 100%;
+      border: 0;
+      outline: none;
+      color: #ffffff;
+      padding: 18.5px 0;
+      font-family: "Inter", sans-serif;
+      font-weight: 600;
+      margin-top: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #create:hover {
+      background: #29a395;
+    }
+
+    .c-credit {
+      color: #9ba4b4;
+      font-size: 13px;
+      margin-top: 25px;
+    }
+
+    .c-credit span {
+      color: #0d9989;
+    }
+
+    .colorsng {
+      margin: 0 auto;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+
+<div class="c-main">
+  <div class="image-wrapper">
+    <div class="c-main__image"></div>
+  </div>
+
+  <div class="c-panels">
+    <p class="instruction">Select a rectangle with a fill to run this plugin</p>
+
+    <button id="create">Generate Colors</button>
+    <p class="c-credit">
+      Built by <span>Seyi</span> (<a href="https://seyi.dev/" target="_blank"
+        >seyi.dev</a
+      >)
+    </p>
+
+    <div class="colorsng">
+      <a href="https://www.coloursng.com/" target="_blank"
+        ><svg
+          width="18"
+          height="15"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M13.965 8.003c-.67 2.055-2.45 3.548-4.94 3.548-2.372 0-4.218-1.492-4.938-3.548H0C.857 11.99 4.391 15 8.96 15c4.6 0 8.153-3.03 9.04-6.997h-4.035z"
+            fill="#FF6E6C"
+          />
+          <path
+            d="M2.043 4.065c1.128 0 2.043-.91 2.043-2.032A2.038 2.038 0 002.043 0C.915 0 0 .91 0 2.033c0 1.122.915 2.032 2.043 2.032zM15.956 4.065c1.128 0 2.043-.91 2.043-2.032A2.038 2.038 0 0015.956 0c-1.128 0-2.043.91-2.043 2.033 0 1.122.915 2.032 2.043 2.032z"
+            fill="#373A40"
+          /></svg
+      ></a>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById("create").onclick = () => {
+    parent.postMessage(
+      { pluginMessage: { type: "create-rectangles", count: 6 } },
+      "*"
+    );
+  };
+</script>
