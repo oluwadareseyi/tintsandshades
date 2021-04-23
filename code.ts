@@ -5,7 +5,7 @@
 // You can access browser APIs in the <script> tag inside "ui.html" which has a
 // full browser environment (see documentation).
 
-const hexToRgb = (hex: String): { r: number; g: number; b: number } => {
+const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
   const color = hex.charAt(0) === "#" ? hex.substring(1, 7) : hex;
   const r = parseInt(color.substring(0, 2), 16) / 255; // hexToR
   const g = parseInt(color.substring(2, 4), 16) / 255; // hexToG
