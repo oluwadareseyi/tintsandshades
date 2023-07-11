@@ -6,5 +6,15 @@
   "ui": "ui.html",
   "editorType": [
     "figma"
+  ],
+  "menu": [
+    {
+      "name": "Create from Selected Rectangle",
+      "command": "fill"
+    },
+    {
+      "name": "Customize Tints and Shades",
+      "command": "customize"
+    }
   ]
 }

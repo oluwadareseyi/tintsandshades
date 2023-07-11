@@ -133,8 +133,18 @@
 <script>
   document.getElementById("create").onclick = () => {
     parent.postMessage(
-      { pluginMessage: { type: "create-rectangles", count: 6 } },
+      { pluginMessage: { type: "custom-rectangles", count: 6 } },
       "*"
     );
+  };
+
+  window.onmessage = (event) => {
+    const { type = "", name = "", data = 1 } = event.data.pluginMessage;
+    if (type === "create-rectangles") {
+      parent.postMessage(
+        { pluginMessage: { type: "create-rectangles", count: 6 } },
+        "*"
+      );
+    }
   };
 </script>

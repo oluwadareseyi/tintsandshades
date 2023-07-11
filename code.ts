@@ -58,104 +58,168 @@ const getTextColor = (bgColor) => {
 
 const selection = figma.currentPage.selection["0"];
 
-const loadFont = async (rect, color) => {
+const loadFont = async (rect, color, opacity) => {
   // Load fonts to use on canvas.
-  await figma.loadFontAsync({ family: "Roboto", style: "Regular" });
+  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
 
-  const textNode = figma.createText();
-  textNode.y = rect.y + 15;
-  textNode.x = 20 + selection.x;
+  const colorTextNode = figma.createText();
   const textColor = getTextColor(rgbToHex(color));
-  textNode.fills = [
+  colorTextNode.fills = [
     {
       type: "SOLID",
       color: textColor,
     },
   ];
 
-  textNode.textCase = "UPPER";
-  textNode.characters = rgbToHex(color);
-  selection.parent.appendChild(textNode);
+  colorTextNode.textCase = "UPPER";
+  colorTextNode.characters = rgbToHex(color);
+  colorTextNode.lineHeight = {
+    value: 100,
+    unit: "PERCENT",
+  };
+
+  const opacityTextNode = figma.createText();
+  opacityTextNode.fills = [
+    {
+      type: "SOLID",
+      color: textColor,
+    },
+  ];
+
+  colorTextNode.y = rect.y + 14;
+  colorTextNode.x = 16 + selection.x;
+
+  opacityTextNode.textCase = "UPPER";
+  opacityTextNode.characters =
+    opacity === "BASE" ? "Base" : `${Math.round(opacity * 100)}%`;
+  opacityTextNode.lineHeight = {
+    value: 100,
+    unit: "PERCENT",
+  };
+
+  opacityTextNode.y = rect.y + 14;
+  // make x position 20px from the right side of the rectangle
+  opacityTextNode.x = rect.x + rect.width - 16 - opacityTextNode.width;
+
+  selection.parent.appendChild(colorTextNode);
+  selection.parent.appendChild(opacityTextNode);
 };
 
-if (
-  figma.currentPage.selection.length === 1 &&
-  selection.type === "RECTANGLE"
-) {
-  const fills = selection.fills[0];
+if (figma.command === "fill") {
+  figma.showUI(__html__, {
+    visible: false,
+  });
 
-  figma.showUI(__html__);
-  figma.ui.resize(320, 490);
-
-  figma.ui.onmessage = (msg) => {
-    // One way of distinguishing between different types of messages sent from
-    // your HTML page is to use an object with a "type" property like this.
-    if (msg.type === "create-rectangles") {
-      const nodes: SceneNode[] = [];
-
-      for (let i = 0; i < msg.count; i++) {
-        const opacity = i === msg.count - 1 ? 0.2 : 1 - (1 / msg.count) * i;
-
-        const generateLightColors = () => {
-          const rect1 = figma.createRectangle();
-
-          rect1.resize(selection.width, 40);
-          rect1.y = i * -40 + selection.y + (msg.count * 40 + selection.height);
-          rect1.x = selection.x;
-          const color = RGBAtoRGB(
-            { ...fills.color, a: opacity },
-            { r: 1, g: 1, b: 1 }
-          );
-
-          rect1.fills = [
-            {
-              type: "SOLID",
-              color,
-            },
-          ];
-
-          loadFont(rect1, color);
-
-          selection.parent.appendChild(rect1);
-          nodes.push(rect1);
-        };
-
-        const generateDarkColors = () => {
-          const rect2 = figma.createRectangle();
-          rect2.resize(selection.width, 40);
-          rect2.y =
-            -i * -40 + selection.y + (msg.count * 40 + selection.height);
-          rect2.x = selection.x;
-          const color = RGBAtoRGB(
-            { ...fills.color, a: opacity },
-            { r: 0, g: 0, b: 0 }
-          );
-
-          rect2.fills = [
-            {
-              type: "SOLID",
-              color,
-            },
-          ];
-
-          loadFont(rect2, color);
-          selection.parent.appendChild(rect2);
-          nodes.push(rect2);
-        };
-
-        generateDarkColors();
-        generateLightColors();
-      }
-      figma.currentPage.selection = nodes;
-
-      figma.viewport.scrollAndZoomIntoView(nodes);
-    }
-
-    // Make sure to close the plugin when you're done. Otherwise the plugin will
-    // keep running, which shows the cancel button at the bottom of the screen.
-    figma.closePlugin();
-  };
+  figma.ui.postMessage({
+    type: "create-rectangles",
+    name: "",
+    data: selection,
+  });
 } else {
-  // Show error for user
-  figma.closePlugin("Please select a rectangle object with a fill");
+  figma.showUI(__html__, {
+    width: 320,
+    height: 490,
+  });
 }
+
+figma.ui.onmessage = async (msg) => {
+  // if (msg.type === "create-rectangles") {
+  let fills;
+
+  if (msg.type === "create-rectangles") {
+    if (
+      figma.currentPage.selection.length === 1 &&
+      selection.type === "RECTANGLE"
+    ) {
+      fills = selection.fills[0];
+    } else {
+      // Show error for user
+      figma.closePlugin("Please select a rectangle object with a fill");
+    }
+  }
+
+  if (msg.type === "custom-rectangles") {
+  }
+
+  // One way of distinguishing between different types of messages sent from
+  // your HTML page is to use an object with a "type" property like this.
+  const nodes: SceneNode[] = [];
+
+  for (let i = 0; i < msg.count; i++) {
+    const opacity = i === msg.count - 1 ? 0.2 : 1 - (1 / msg.count) * i;
+
+    const generateLightColors = async () => {
+      const rect1 = figma.createRectangle();
+      let height = 40;
+
+      if (opacity === 1) {
+        height = 100;
+      }
+
+      rect1.resize(selection.width, height);
+
+      rect1.y = i * -40 + selection.y + (msg.count * 40 + selection.height);
+      rect1.x = selection.x;
+      const color = RGBAtoRGB(
+        { ...fills.color, a: opacity },
+        { r: 1, g: 1, b: 1 }
+      );
+
+      rect1.fills = [
+        {
+          type: "SOLID",
+          color,
+        },
+      ];
+
+      selection.parent.appendChild(rect1);
+      nodes.push(rect1);
+
+      const opacityToFontFunction =
+        opacity === 1
+          ? "BASE"
+          : (1 - (1 / (msg.count - 1)) * i) / 2 + 1 / ((msg.count - 1) * 2);
+
+      await loadFont(rect1, color, opacityToFontFunction);
+    };
+
+    const generateDarkColors = async () => {
+      if (opacity !== 1) {
+        const rect2 = figma.createRectangle();
+        rect2.resize(selection.width, 40);
+        rect2.y =
+          -i * -40 + selection.y + (msg.count * 40 + selection.height) + 60;
+        rect2.x = selection.x;
+        const color = RGBAtoRGB(
+          { ...fills.color, a: opacity },
+          { r: 0, g: 0, b: 0 }
+        );
+
+        rect2.fills = [
+          {
+            type: "SOLID",
+            color,
+          },
+        ];
+
+        selection.parent.appendChild(rect2);
+        nodes.push(rect2);
+
+        const opacityToFontFunction = ((1 / (msg.count - 1)) * i) / 2 + 0.5;
+
+        await loadFont(rect2, color, opacityToFontFunction);
+      }
+    };
+
+    await generateDarkColors();
+    await generateLightColors();
+    figma.currentPage.selection = nodes;
+
+    figma.viewport.scrollAndZoomIntoView(nodes);
+  }
+
+  // Make sure to close the plugin when you're done. Otherwise the plugin will
+  // keep running, which shows the cancel button at the bottom of the screen.
+  figma.closePlugin();
+};
+// };
