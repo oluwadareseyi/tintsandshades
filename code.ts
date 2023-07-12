@@ -101,8 +101,7 @@ const loadFont = async (rect, color, opacity) => {
   // make x position 20px from the right side of the rectangle
   opacityTextNode.x = rect.x + rect.width - 16 - opacityTextNode.width;
 
-  selection.parent.appendChild(colorTextNode);
-  selection.parent.appendChild(opacityTextNode);
+  return { colorTextNode, opacityTextNode };
 };
 
 if (figma.command === "fill") {
@@ -150,6 +149,7 @@ figma.ui.onmessage = async (msg) => {
 
     const generateLightColors = async () => {
       const rect1 = figma.createRectangle();
+      const group = figma.group([rect1], figma.currentPage);
       let height = 40;
 
       if (opacity === 1) {
@@ -160,6 +160,7 @@ figma.ui.onmessage = async (msg) => {
 
       rect1.y = i * -40 + selection.y + (msg.count * 40 + selection.height);
       rect1.x = selection.x;
+
       const color = RGBAtoRGB(
         { ...fills.color, a: opacity },
         { r: 1, g: 1, b: 1 }
@@ -172,20 +173,36 @@ figma.ui.onmessage = async (msg) => {
         },
       ];
 
-      selection.parent.appendChild(rect1);
-      nodes.push(rect1);
-
       const opacityToFontFunction =
         opacity === 1
           ? "BASE"
           : (1 - (1 / (msg.count - 1)) * i) / 2 + 1 / ((msg.count - 1) * 2);
 
-      await loadFont(rect1, color, opacityToFontFunction);
+      const textColor = rgbToHex(color).substring(1).toUpperCase();
+
+      group.name =
+        opacityToFontFunction === "BASE"
+          ? `${textColor}/Base`
+          : `${textColor}/${Math.round(opacityToFontFunction * 100)}%`;
+
+      selection.parent.appendChild(group);
+
+      const { colorTextNode, opacityTextNode } = await loadFont(
+        rect1,
+        color,
+        opacityToFontFunction
+      );
+
+      group.appendChild(colorTextNode);
+      group.appendChild(opacityTextNode);
+      group.expanded = false;
+      nodes.push(group);
     };
 
     const generateDarkColors = async () => {
       if (opacity !== 1) {
         const rect2 = figma.createRectangle();
+        const group = figma.group([rect2], figma.currentPage);
         rect2.resize(selection.width, 40);
         rect2.y =
           -i * -40 + selection.y + (msg.count * 40 + selection.height) + 60;
@@ -202,18 +219,30 @@ figma.ui.onmessage = async (msg) => {
           },
         ];
 
-        selection.parent.appendChild(rect2);
-        nodes.push(rect2);
-
         const opacityToFontFunction = ((1 / (msg.count - 1)) * i) / 2 + 0.5;
 
-        await loadFont(rect2, color, opacityToFontFunction);
+        const textColor = rgbToHex(color).substring(1).toUpperCase();
+
+        group.name = `${textColor}/${Math.round(opacityToFontFunction * 100)}%`;
+
+        selection.parent.appendChild(group);
+
+        const { colorTextNode, opacityTextNode } = await loadFont(
+          rect2,
+          color,
+          opacityToFontFunction
+        );
+
+        group.appendChild(colorTextNode);
+        group.appendChild(opacityTextNode);
+        group.expanded = false;
+        nodes.push(group);
       }
     };
 
     await generateDarkColors();
     await generateLightColors();
-    figma.currentPage.selection = nodes;
+    // figma.currentPage.selection = nodes;
 
     figma.viewport.scrollAndZoomIntoView(nodes);
   }

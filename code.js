@@ -94,8 +94,7 @@ const loadFont = (rect, color, opacity) => __awaiter(this, void 0, void 0, funct
     opacityTextNode.y = rect.y + 14;
     // make x position 20px from the right side of the rectangle
     opacityTextNode.x = rect.x + rect.width - 16 - opacityTextNode.width;
-    selection.parent.appendChild(colorTextNode);
-    selection.parent.appendChild(opacityTextNode);
+    return { colorTextNode, opacityTextNode };
 });
 if (figma.command === "fill") {
     figma.showUI(__html__, {
@@ -135,6 +134,7 @@ figma.ui.onmessage = (msg) => __awaiter(this, void 0, void 0, function* () {
         const opacity = i === msg.count - 1 ? 0.2 : 1 - (1 / msg.count) * i;
         const generateLightColors = () => __awaiter(this, void 0, void 0, function* () {
             const rect1 = figma.createRectangle();
+            const group = figma.group([rect1], figma.currentPage);
             let height = 40;
             if (opacity === 1) {
                 height = 100;
@@ -149,16 +149,25 @@ figma.ui.onmessage = (msg) => __awaiter(this, void 0, void 0, function* () {
                     color,
                 },
             ];
-            selection.parent.appendChild(rect1);
-            nodes.push(rect1);
             const opacityToFontFunction = opacity === 1
                 ? "BASE"
                 : (1 - (1 / (msg.count - 1)) * i) / 2 + 1 / ((msg.count - 1) * 2);
-            yield loadFont(rect1, color, opacityToFontFunction);
+            const textColor = rgbToHex(color).substring(1).toUpperCase();
+            group.name =
+                opacityToFontFunction === "BASE"
+                    ? `${textColor}/Base`
+                    : `${textColor}/${Math.round(opacityToFontFunction * 100)}%`;
+            selection.parent.appendChild(group);
+            const { colorTextNode, opacityTextNode } = yield loadFont(rect1, color, opacityToFontFunction);
+            group.appendChild(colorTextNode);
+            group.appendChild(opacityTextNode);
+            group.expanded = false;
+            nodes.push(group);
         });
         const generateDarkColors = () => __awaiter(this, void 0, void 0, function* () {
             if (opacity !== 1) {
                 const rect2 = figma.createRectangle();
+                const group = figma.group([rect2], figma.currentPage);
                 rect2.resize(selection.width, 40);
                 rect2.y =
                     -i * -40 + selection.y + (msg.count * 40 + selection.height) + 60;
@@ -170,15 +179,20 @@ figma.ui.onmessage = (msg) => __awaiter(this, void 0, void 0, function* () {
                         color,
                     },
                 ];
-                selection.parent.appendChild(rect2);
-                nodes.push(rect2);
                 const opacityToFontFunction = ((1 / (msg.count - 1)) * i) / 2 + 0.5;
-                yield loadFont(rect2, color, opacityToFontFunction);
+                const textColor = rgbToHex(color).substring(1).toUpperCase();
+                group.name = `${textColor}/${Math.round(opacityToFontFunction * 100)}%`;
+                selection.parent.appendChild(group);
+                const { colorTextNode, opacityTextNode } = yield loadFont(rect2, color, opacityToFontFunction);
+                group.appendChild(colorTextNode);
+                group.appendChild(opacityTextNode);
+                group.expanded = false;
+                nodes.push(group);
             }
         });
         yield generateDarkColors();
         yield generateLightColors();
-        figma.currentPage.selection = nodes;
+        // figma.currentPage.selection = nodes;
         figma.viewport.scrollAndZoomIntoView(nodes);
     }
     // Make sure to close the plugin when you're done. Otherwise the plugin will
